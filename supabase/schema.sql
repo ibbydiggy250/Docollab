@@ -33,13 +33,43 @@ create table if not exists public.contributors (
   created_at timestamp with time zone default now()
 );
 
+create table if not exists public.google_connections (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  provider text not null default 'google',
+  scopes text[] default '{}',
+  encrypted_refresh_token text,
+  access_token_expires_at timestamp with time zone,
+  connected_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  status text not null default 'token_unavailable' check (
+    status in ('connected', 'needs_reconnect', 'token_unavailable')
+  ),
+  primary key (user_id, provider)
+);
+
 create index if not exists reports_user_id_created_at_idx on public.reports(user_id, created_at desc);
 create index if not exists reports_google_doc_id_idx on public.reports(google_doc_id);
 create index if not exists contributors_report_id_idx on public.contributors(report_id);
+create index if not exists google_connections_user_id_status_idx on public.google_connections(user_id, status);
 
 alter table public.profiles enable row level security;
 alter table public.reports enable row level security;
 alter table public.contributors enable row level security;
+alter table public.google_connections enable row level security;
+
+drop policy if exists "Users can view their own profile" on public.profiles;
+drop policy if exists "Users can insert their own profile" on public.profiles;
+drop policy if exists "Users can update their own profile" on public.profiles;
+
+drop policy if exists "Users can view their own reports" on public.reports;
+drop policy if exists "Users can create their own reports" on public.reports;
+drop policy if exists "Users can update their own reports" on public.reports;
+drop policy if exists "Users can delete their own reports" on public.reports;
+
+drop policy if exists "Users can view contributor rows for owned reports" on public.contributors;
+drop policy if exists "Users can create contributor rows for owned reports" on public.contributors;
+drop policy if exists "Users can update contributor rows for owned reports" on public.contributors;
+drop policy if exists "Users can delete contributor rows for owned reports" on public.contributors;
 
 create policy "Users can view their own profile"
 on public.profiles for select

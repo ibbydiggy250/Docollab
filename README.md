@@ -79,6 +79,48 @@ The app uses user-scoped RLS policies. Reports are readable only by the authenti
 5. The mock pipeline extracts the doc ID, loads mock revisions, groups contributor activity, generates deterministic scores, saves the report, and redirects to the report page.
 6. Refresh the dashboard to see the saved report under previous reports.
 
+## Google Authorship Probe
+
+The app now includes a technical spike for real Google data access. It does not replace the mock analyzer yet.
+
+Add these server-side values to `.env.local`:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+GOOGLE_TOKEN_ENCRYPTION_KEY=a-random-value-with-at-least-32-characters
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+```
+
+Run the updated `supabase/schema.sql` so the `google_connections` table exists.
+
+In Google Cloud and Supabase Google Auth settings, make sure the consent flow includes:
+
+```text
+openid
+email
+profile
+https://www.googleapis.com/auth/drive.metadata.readonly
+https://www.googleapis.com/auth/drive.activity.readonly
+https://www.googleapis.com/auth/documents.readonly
+```
+
+Then sign out and sign in again. The app requests offline Google access and stores the Google refresh token encrypted at rest.
+
+Use the temporary probe endpoint while signed in. The easiest local check is from browser DevTools on the Docollab page, so your Supabase auth cookies are included:
+
+```js
+await fetch("/api/google/probe", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    docUrl: "https://docs.google.com/document/d/YOUR_DOC_ID/edit"
+  })
+}).then((response) => response.json());
+```
+
+The response reports what Google returned from Drive metadata, Drive revisions, Drive Activity, and Docs current content. Treat it as evidence gathering only; it does not prove exact student contribution scoring yet.
+
 ## Next Steps
 
 - Add Google OAuth scopes for Drive and Docs access, such as `https://www.googleapis.com/auth/drive.metadata.readonly` and document read scopes appropriate to the final integration.

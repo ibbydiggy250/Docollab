@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { saveGoogleConnection } from "@/lib/db/google-connections";
 import { upsertProfileForUser } from "@/lib/db/queries";
+import { GOOGLE_AUTH_SCOPES } from "@/lib/google/scopes";
+import { createAdminClient, isSupabaseAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
@@ -12,7 +15,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return NextResponse.redirect(new URL(`/?auth_error=${encodeURIComponent(error.message)}`, requestUrl.origin));
@@ -28,6 +31,24 @@ export async function GET(request: Request) {
     } catch (err) {
       console.error("Profile upsert failed during auth callback:", err);
       return NextResponse.redirect(new URL("/dashboard?setup_error=missing_schema", requestUrl.origin));
+    }
+
+    try {
+      if (!isSupabaseAdminConfigured()) {
+        return NextResponse.redirect(new URL("/dashboard?setup_error=google_token_storage", requestUrl.origin));
+      }
+
+      const adminSupabase = createAdminClient();
+      await saveGoogleConnection(adminSupabase, {
+        userId: user.id,
+        scopes: GOOGLE_AUTH_SCOPES,
+        providerRefreshToken: data.session?.provider_refresh_token,
+        accessTokenExpiresAt: null,
+        status: data.session?.provider_refresh_token ? "connected" : "token_unavailable"
+      });
+    } catch (err) {
+      console.error("Google token storage failed during auth callback:", err);
+      return NextResponse.redirect(new URL("/dashboard?setup_error=google_token_storage", requestUrl.origin));
     }
   }
 

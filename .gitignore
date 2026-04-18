@@ -8,5 +8,6 @@ dist
 .vercel
 coverage
 .next-dev*.log
+plan.txt
 
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { GOOGLE_AUTH_SCOPE_PARAM } from "@/lib/google/scopes";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthButtonProps = {
@@ -28,7 +29,12 @@ export function LoginButton({ isSupabaseConfigured = true, label = "Sign in" }: 
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/auth/callback`
+          redirectTo: `${origin}/auth/callback`,
+          scopes: GOOGLE_AUTH_SCOPE_PARAM,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent"
+          }
         }
       });
 

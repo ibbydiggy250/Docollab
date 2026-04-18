@@ -18,6 +18,10 @@ function getSetupMessage(setupError?: string) {
     return "Your sign-in worked, but the Supabase tables are not available yet. Run supabase/schema.sql in the Supabase SQL Editor, then refresh this page.";
   }
 
+  if (setupError === "google_token_storage") {
+    return "Your sign-in worked, but Google token storage is not ready yet. Confirm SUPABASE_SERVICE_ROLE_KEY and GOOGLE_TOKEN_ENCRYPTION_KEY are loaded, rerun supabase/schema.sql so google_connections exists, then sign in again.";
+  }
+
   return null;
 }
 
