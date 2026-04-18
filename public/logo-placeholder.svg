@@ -1,0 +1,8 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Docollab logo placeholder">
+  <rect width="160" height="160" rx="28" fill="#0E8F84"/>
+  <path d="M45 33H99L119 53V127H45V33Z" fill="white"/>
+  <path d="M99 33V54H119" fill="#F2C94C"/>
+  <path d="M60 72H100" stroke="#1F2937" stroke-width="8" stroke-linecap="round"/>
+  <path d="M60 91H92" stroke="#1F2937" stroke-width="8" stroke-linecap="round"/>
+  <path d="M60 110H82" stroke="#E64B63" stroke-width="8" stroke-linecap="round"/>
+</svg>
