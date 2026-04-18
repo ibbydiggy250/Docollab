@@ -3,6 +3,24 @@ import Link from "next/link";
 import { LoginButton } from "@/components/layout/auth-buttons";
 import { Button } from "@/components/ui/button";
 
+const reportPreviewRows = [
+  {
+    name: "Maya Chen",
+    percent: "34%",
+    detail: "Primary drafting and evidence"
+  },
+  {
+    name: "Jordan Rivera",
+    percent: "27%",
+    detail: "Explanatory detail and synthesis"
+  },
+  {
+    name: "Sam Patel",
+    percent: "21%",
+    detail: "Revision and conclusion work"
+  }
+];
+
 type HeroProps = {
   isAuthenticated: boolean;
   authConfigured: boolean;
@@ -31,7 +49,7 @@ export function Hero({ isAuthenticated, authConfigured }: HeroProps) {
                 <Link href="/dashboard">Get Started</Link>
               </Button>
             ) : (
-              <LoginButton disabled={!authConfigured} label="Get Started" />
+              <LoginButton isSupabaseConfigured={authConfigured} label="Get Started" />
             )}
             <Button asChild variant="outline" size="lg">
               <Link href="#features">See the flow</Link>
@@ -47,21 +65,17 @@ export function Hero({ isAuthenticated, authConfigured }: HeroProps) {
                 <p className="text-sm text-muted-foreground">Mock report preview</p>
               </div>
             </div>
-            <div className="mt-5 space-y-4">
-              {[
-                ["Maya Chen", "34%", "Primary drafting and evidence"],
-                ["Jordan Rivera", "27%", "Explanatory detail and synthesis"],
-                ["Sam Patel", "21%", "Revision and conclusion work"]
-              ].map(([name, percent, detail]) => (
-                <div key={name} className="rounded-md border p-4">
+            <ul className="mt-5 space-y-4" aria-label="Example contributor report preview">
+              {reportPreviewRows.map((row) => (
+                <li key={row.name} className="rounded-md border p-4">
                   <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium">{name}</p>
-                    <p className="text-sm font-semibold text-primary">{percent}</p>
+                    <p className="font-medium">{row.name}</p>
+                    <p className="text-sm font-semibold text-primary">{row.percent}</p>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
-                </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{row.detail}</p>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
       </div>

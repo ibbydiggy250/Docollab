@@ -7,7 +7,21 @@ import type { Report } from "@/types/report";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: {
+    setup_error?: string;
+  };
+};
+
+function getSetupMessage(setupError?: string) {
+  if (setupError === "missing_schema") {
+    return "Your sign-in worked, but the Supabase tables are not available yet. Run supabase/schema.sql in the Supabase SQL Editor, then refresh this page.";
+  }
+
+  return null;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = createClient();
   const {
     data: { user }
@@ -15,6 +29,7 @@ export default async function DashboardPage() {
 
   let reports: Report[] = [];
   let loadError: string | null = null;
+  const setupMessage = getSetupMessage(searchParams?.setup_error);
 
   if (user) {
     try {
@@ -33,6 +48,13 @@ export default async function DashboardPage() {
           Paste a Google Doc URL to run the scaffolded mock analysis pipeline and save a report.
         </p>
       </section>
+
+      {setupMessage ? (
+        <Alert variant="destructive">
+          <AlertTitle>Database setup needed</AlertTitle>
+          <AlertDescription>{setupMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <DocUrlForm />
 

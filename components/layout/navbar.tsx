@@ -23,7 +23,7 @@ export async function Navbar() {
           <Image src="/logo-placeholder.svg" alt="" width={34} height={34} priority />
           <span>Docollab</span>
         </Link>
-        <nav className="flex items-center gap-3">
+        <nav className="flex items-center gap-3" aria-label="Primary navigation">
           {user ? (
             <>
               <Button asChild variant="ghost">
@@ -32,7 +32,7 @@ export async function Navbar() {
               <LogoutButton />
             </>
           ) : (
-            <LoginButton disabled={!configured} />
+            <LoginButton isSupabaseConfigured={configured} />
           )}
         </nav>
       </div>

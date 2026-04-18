@@ -15,7 +15,7 @@ export default async function MarketingPage() {
   }
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <Hero isAuthenticated={isAuthenticated} authConfigured={configured} />
       <Features />
     </main>

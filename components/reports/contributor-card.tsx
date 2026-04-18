@@ -8,13 +8,15 @@ type ContributorCardProps = {
 };
 
 function ScoreRow({ label, value }: { label: string; value: number }) {
+  const scoreText = `${label} score: ${value} out of 100`;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium">{value}/100</span>
       </div>
-      <Progress value={value} />
+      <Progress value={value} aria-label={scoreText} />
     </div>
   );
 }

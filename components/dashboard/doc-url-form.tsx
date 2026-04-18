@@ -2,25 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const docUrlSchema = z
-  .string()
-  .trim()
-  .min(1, "Paste a Google Docs URL to analyze.")
-  .url("Enter a valid URL.")
-  .refine((value) => {
-    try {
-      const url = new URL(value);
-      return url.hostname.endsWith("docs.google.com") && url.pathname.includes("/document/d/");
-    } catch {
-      return false;
-    }
-  }, "Enter a valid Google Docs document URL.");
+import { googleDocUrlSchema } from "@/lib/google/doc-url-schema";
 
 export function DocUrlForm() {
   const router = useRouter();
@@ -32,7 +18,7 @@ export function DocUrlForm() {
     event.preventDefault();
     setError(null);
 
-    const parsed = docUrlSchema.safeParse(docUrl);
+    const parsed = googleDocUrlSchema.safeParse(docUrl);
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Check the document URL and try again.");
@@ -67,7 +53,7 @@ export function DocUrlForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-card p-5">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-card p-5" noValidate>
       <div className="space-y-2">
         <Label htmlFor="doc-url">Google Doc URL</Label>
         <Input
@@ -75,16 +61,21 @@ export function DocUrlForm() {
           type="url"
           placeholder="https://docs.google.com/document/d/..."
           value={docUrl}
+          aria-describedby={error ? "doc-url-error" : "doc-url-help"}
+          aria-invalid={Boolean(error)}
           onChange={(event) => setDocUrl(event.target.value)}
         />
+        <p id="doc-url-help" className="text-sm text-muted-foreground">
+          Any valid-looking Google Docs URL will run against mock revision data for now.
+        </p>
       </div>
       {error ? (
-        <Alert variant="destructive">
+        <Alert id="doc-url-error" variant="destructive">
           <AlertTitle>Analysis could not start</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
         {isSubmitting ? "Analyzing mock revisions..." : "Analyze Document"}
       </Button>
     </form>

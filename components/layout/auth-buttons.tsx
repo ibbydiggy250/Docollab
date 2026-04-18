@@ -6,17 +6,18 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthButtonProps = {
-  disabled?: boolean;
+  isSupabaseConfigured?: boolean;
   label?: string;
 };
 
-export function LoginButton({ disabled, label = "Sign in" }: AuthButtonProps) {
+export function LoginButton({ isSupabaseConfigured = true, label = "Sign in" }: AuthButtonProps) {
   const [error, setError] = useState<string | null>(null);
+  const statusId = `${label.toLowerCase().replace(/\s+/g, "-")}-auth-status`;
 
   async function handleLogin() {
     setError(null);
 
-    if (disabled) {
+    if (!isSupabaseConfigured) {
       setError("Add Supabase environment variables to enable sign in.");
       return;
     }
@@ -41,10 +42,14 @@ export function LoginButton({ disabled, label = "Sign in" }: AuthButtonProps) {
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <Button type="button" onClick={handleLogin} variant="default">
+      <Button type="button" onClick={handleLogin} variant="default" aria-describedby={error ? statusId : undefined}>
         {label}
       </Button>
-      {error ? <p className="max-w-56 text-xs text-destructive">{error}</p> : null}
+      {error ? (
+        <p id={statusId} className="max-w-56 text-xs text-destructive" aria-live="polite">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
