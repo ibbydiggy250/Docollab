@@ -47,15 +47,43 @@ create table if not exists public.google_connections (
   primary key (user_id, provider)
 );
 
+create table if not exists public.google_doc_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  google_doc_id text not null,
+  doc_url text not null,
+  doc_title text,
+  activity_count integer default 0,
+  revision_count integer default 0,
+  document_text_length integer default 0,
+  document_text_preview text,
+  has_collaborator_identity boolean default false,
+  has_edit_timestamps boolean default false,
+  has_revision_ids boolean default false,
+  has_last_modifying_users boolean default false,
+  has_document_content boolean default false,
+  has_text_deltas boolean default false,
+  likely_supports_contribution_estimate boolean default false,
+  metadata jsonb not null default '{}'::jsonb,
+  revisions jsonb not null default '{}'::jsonb,
+  activity jsonb not null default '{}'::jsonb,
+  document jsonb not null default '{}'::jsonb,
+  feasibility jsonb not null default '{}'::jsonb,
+  created_at timestamp with time zone default now()
+);
+
 create index if not exists reports_user_id_created_at_idx on public.reports(user_id, created_at desc);
 create index if not exists reports_google_doc_id_idx on public.reports(google_doc_id);
 create index if not exists contributors_report_id_idx on public.contributors(report_id);
 create index if not exists google_connections_user_id_status_idx on public.google_connections(user_id, status);
+create index if not exists google_doc_snapshots_user_id_created_at_idx on public.google_doc_snapshots(user_id, created_at desc);
+create index if not exists google_doc_snapshots_google_doc_id_idx on public.google_doc_snapshots(google_doc_id);
 
 alter table public.profiles enable row level security;
 alter table public.reports enable row level security;
 alter table public.contributors enable row level security;
 alter table public.google_connections enable row level security;
+alter table public.google_doc_snapshots enable row level security;
 
 drop policy if exists "Users can view their own profile" on public.profiles;
 drop policy if exists "Users can insert their own profile" on public.profiles;
@@ -75,6 +103,10 @@ drop policy if exists "Users cannot read google connections directly" on public.
 drop policy if exists "Users cannot insert google connections directly" on public.google_connections;
 drop policy if exists "Users cannot update google connections directly" on public.google_connections;
 drop policy if exists "Users cannot delete google connections directly" on public.google_connections;
+
+drop policy if exists "Users can view their own google snapshots" on public.google_doc_snapshots;
+drop policy if exists "Users can create their own google snapshots" on public.google_doc_snapshots;
+drop policy if exists "Users can delete their own google snapshots" on public.google_doc_snapshots;
 
 create policy "Users can view their own profile"
 on public.profiles for select
@@ -174,3 +206,15 @@ with check (false);
 create policy "Users cannot delete google connections directly"
 on public.google_connections for delete
 using (false);
+
+create policy "Users can view their own google snapshots"
+on public.google_doc_snapshots for select
+using (auth.uid() = user_id);
+
+create policy "Users can create their own google snapshots"
+on public.google_doc_snapshots for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can delete their own google snapshots"
+on public.google_doc_snapshots for delete
+using (auth.uid() = user_id);

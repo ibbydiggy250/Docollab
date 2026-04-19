@@ -74,3 +74,41 @@ export interface GoogleProbeResult {
     notes: string[];
   };
 }
+
+export interface GoogleDocSnapshotRecord {
+  id: string;
+  user_id: string;
+  google_doc_id: string;
+  doc_url: string;
+  doc_title: string | null;
+  activity_count: number;
+  revision_count: number;
+  document_text_length: number;
+  document_text_preview: string | null;
+  has_collaborator_identity: boolean;
+  has_edit_timestamps: boolean;
+  has_revision_ids: boolean;
+  has_last_modifying_users: boolean;
+  has_document_content: boolean;
+  has_text_deltas: boolean;
+  likely_supports_contribution_estimate: boolean;
+  metadata: GoogleProbeResult["metadata"];
+  revisions: GoogleProbeResult["revisions"];
+  activity: GoogleProbeResult["activity"];
+  document: GoogleProbeResult["document"];
+  feasibility: GoogleProbeResult["feasibility"];
+  created_at: string;
+}
+
+export interface GoogleContributorSignal {
+  contributorKey: string;
+  contributorName: string;
+  contributorEmail?: string;
+  activityCount: number;
+  revisionCount: number;
+  firstActivityAt?: string;
+  lastActivityAt?: string;
+  actionTypes: string[];
+  appearedAsLastModifier: boolean;
+  activitySharePercent: number;
+}
