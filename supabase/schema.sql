@@ -71,6 +71,11 @@ drop policy if exists "Users can create contributor rows for owned reports" on p
 drop policy if exists "Users can update contributor rows for owned reports" on public.contributors;
 drop policy if exists "Users can delete contributor rows for owned reports" on public.contributors;
 
+drop policy if exists "Users cannot read google connections directly" on public.google_connections;
+drop policy if exists "Users cannot insert google connections directly" on public.google_connections;
+drop policy if exists "Users cannot update google connections directly" on public.google_connections;
+drop policy if exists "Users cannot delete google connections directly" on public.google_connections;
+
 create policy "Users can view their own profile"
 on public.profiles for select
 using (auth.uid() = id);
@@ -152,3 +157,20 @@ using (
       and reports.user_id = auth.uid()
   )
 );
+
+create policy "Users cannot read google connections directly"
+on public.google_connections for select
+using (false);
+
+create policy "Users cannot insert google connections directly"
+on public.google_connections for insert
+with check (false);
+
+create policy "Users cannot update google connections directly"
+on public.google_connections for update
+using (false)
+with check (false);
+
+create policy "Users cannot delete google connections directly"
+on public.google_connections for delete
+using (false);
