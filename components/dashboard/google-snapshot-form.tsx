@@ -68,7 +68,7 @@ export function GoogleSnapshotForm() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-card p-5" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-lg border bg-card p-5" noValidate>
         <div className="space-y-2">
           <Label htmlFor="google-snapshot-url">Google Doc URL</Label>
           <Input
@@ -81,7 +81,7 @@ export function GoogleSnapshotForm() {
             onChange={(event) => setDocUrl(event.target.value)}
           />
           <p id="google-snapshot-help" className="text-sm text-muted-foreground">
-            Fetches real Google metadata, activity, revisions, and a current document text preview.
+            Uses your Google connection to fetch real metadata, activity, revisions, and a current document preview.
           </p>
         </div>
         {error ? (
@@ -90,15 +90,20 @@ export function GoogleSnapshotForm() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
-        <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-          {isSubmitting ? "Fetching Google data..." : "Fetch Google Data"}
-        </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Observed contribution scores are generated from the saved Google snapshot below.
+          </p>
+          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+            {isSubmitting ? "Analyzing doc..." : "Analyze Google Doc"}
+          </Button>
+        </div>
       </form>
 
       {snapshot ? (
         <Card>
           <CardHeader>
-            <CardTitle>Saved Google data</CardTitle>
+            <CardTitle>Latest saved snapshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>

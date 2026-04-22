@@ -109,6 +109,27 @@ export interface GoogleContributorSignal {
   firstActivityAt?: string;
   lastActivityAt?: string;
   actionTypes: string[];
+  actionCounts: Record<string, number>;
+  weightedActivityPoints: number;
+  timelineMoments: string[];
   appearedAsLastModifier: boolean;
   activitySharePercent: number;
+  identityResolution: "direct" | "heuristic" | "unresolved";
+}
+
+export interface ObservedContributionBreakdown {
+  activity: number;
+  temporal_presence: number;
+  consistency: number;
+  ownership_proxy: number;
+}
+
+export interface ObservedContributorScore extends GoogleContributorSignal {
+  observedContributionScore: number;
+  scoreBreakdown: ObservedContributionBreakdown;
+  scoreConfidence: number;
+  scoreLabel: "High Contributor" | "Moderate Contributor" | "Minimal Contributor";
+  scoreSummary: string;
+  timelineBuckets: boolean[];
+  weightedActivitySharePercent: number;
 }

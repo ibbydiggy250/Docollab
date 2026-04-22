@@ -1,13 +1,9 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DocUrlForm } from "@/components/dashboard/doc-url-form";
 import { GoogleSnapshotForm } from "@/components/dashboard/google-snapshot-form";
 import { GoogleSnapshotsList } from "@/components/dashboard/google-snapshots-list";
-import { ReportsList } from "@/components/dashboard/reports-list";
 import { listGoogleDocSnapshotsForUser } from "@/lib/db/google-snapshots";
-import { listReportsForUser } from "@/lib/db/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { GoogleDocSnapshotRecord } from "@/types/google";
-import type { Report } from "@/types/report";
 
 export const dynamic = "force-dynamic";
 
@@ -35,19 +31,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     data: { user }
   } = await supabase.auth.getUser();
 
-  let reports: Report[] = [];
   let snapshots: GoogleDocSnapshotRecord[] = [];
-  let loadError: string | null = null;
   let snapshotLoadError: string | null = null;
   const setupMessage = getSetupMessage(searchParams?.setup_error);
 
   if (user) {
-    try {
-      reports = (await listReportsForUser(supabase, user.id)) as Report[];
-    } catch {
-      loadError = "Previous reports could not be loaded. Check your Supabase schema and RLS policies.";
-    }
-
     try {
       snapshots = await listGoogleDocSnapshotsForUser(supabase, user.id);
     } catch {
@@ -62,8 +50,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <p className="text-sm font-medium text-primary">Dashboard</p>
         <h1 className="text-3xl font-bold tracking-normal">Welcome back{user?.email ? `, ${user.email}` : ""}</h1>
         <p className="max-w-2xl text-muted-foreground">
-          Fetch real Google data first, then use mock reports separately while the contribution model is still being
-          built.
+          Paste a Google Doc URL to fetch real collaboration data and score each contributor from the observed Google
+          activity timeline.
         </p>
       </section>
 
@@ -76,10 +64,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Fetch Google data</h2>
+          <h2 className="text-xl font-semibold">Analyze a Google Doc</h2>
           <p className="text-sm text-muted-foreground">
-            Saves Google metadata, activity, revisions, and current document text preview. This does not generate a
-            final contribution report yet.
+            Fetches Google metadata, activity, revisions, and current document text preview, then generates observed
+            contribution scores from that real data.
           </p>
         </div>
         <GoogleSnapshotForm />
@@ -89,7 +77,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div>
           <h2 className="text-xl font-semibold">Saved Google data</h2>
           <p className="text-sm text-muted-foreground">
-            These snapshots are stored in Supabase and can be used for the next contribution-analysis step.
+            Each snapshot is stored in Supabase and scored using weighted activity, temporal presence, consistency, and
+            ownership signals.
           </p>
         </div>
         {snapshotLoadError ? (
@@ -99,31 +88,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Alert>
         ) : (
           <GoogleSnapshotsList snapshots={snapshots} />
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">Mock report flow</h2>
-          <p className="text-sm text-muted-foreground">
-            This still uses mock revisions while the real Google-based contribution model is being built.
-          </p>
-        </div>
-        <DocUrlForm />
-      </section>
-
-      <section id="reports" className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">Previous reports</h2>
-          <p className="text-sm text-muted-foreground">Stored in Supabase and scoped to the signed-in teacher.</p>
-        </div>
-        {loadError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Reports unavailable</AlertTitle>
-            <AlertDescription>{loadError}</AlertDescription>
-          </Alert>
-        ) : (
-          <ReportsList reports={reports} />
         )}
       </section>
     </div>

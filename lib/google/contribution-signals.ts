@@ -22,6 +22,14 @@ const UNKNOWN_CONTRIBUTOR: ContributorIdentity = {
 
 const GOOGLE_PERSON_PREFIX = "people/";
 const IDENTITY_MATCH_WINDOW_MS = 10 * 60 * 1000;
+const ACTION_WEIGHTS: Record<string, number> = {
+  edit: 1,
+  create: 0.8,
+  comment: 0.5,
+  rename: 0.2,
+  move: 0.15,
+  permissionchange: 0.05
+};
 
 export function buildGoogleContributorSignals(
   snapshot: GoogleDocSnapshotRecord
@@ -37,10 +45,16 @@ export function buildGoogleContributorSignals(
 
       signal.activityCount += 1;
       updateDateRange(signal, happenedAt);
+      appendTimelineMoment(signal, happenedAt);
 
       for (const action of event.actions) {
-        signal.actionTypes.add(action);
+        const normalizedAction = normalizeActionName(action);
+
+        signal.actionTypes.add(normalizedAction);
+        signal.actionCounts[normalizedAction] = (signal.actionCounts[normalizedAction] ?? 0) + 1;
       }
+
+      signal.weightedActivityPoints += getEventWeight(event.actions);
     }
   }
 
@@ -56,6 +70,7 @@ export function buildGoogleContributorSignals(
     signal.revisionCount += 1;
     signal.appearedAsLastModifier = true;
     updateDateRange(signal, revision.modifiedTime);
+    appendTimelineMoment(signal, revision.modifiedTime);
   }
 
   mergeLikelyGooglePersonMatches(signals);
@@ -70,7 +85,8 @@ export function buildGoogleContributorSignals(
       ...signal,
       actionTypes: Array.from(signal.actionTypes).sort(),
       activitySharePercent:
-        totalActivityCount === 0 ? 0 : Math.round((signal.activityCount / totalActivityCount) * 100)
+        totalActivityCount === 0 ? 0 : Math.round((signal.activityCount / totalActivityCount) * 100),
+      timelineMoments: sortTimelineMoments(signal.timelineMoments)
     }))
     .sort((first, second) => {
       if (second.activityCount !== first.activityCount) {
@@ -152,10 +168,18 @@ function mergeLikelyGooglePersonMatches(signals: Map<string, SignalDraft>) {
     namedSignal.activityCount += googlePersonSignal.activityCount;
     updateDateRange(namedSignal, googlePersonSignal.firstActivityAt);
     updateDateRange(namedSignal, googlePersonSignal.lastActivityAt);
+    namedSignal.timelineMoments.push(...googlePersonSignal.timelineMoments);
+    namedSignal.weightedActivityPoints += googlePersonSignal.weightedActivityPoints;
 
     for (const action of googlePersonSignal.actionTypes) {
       namedSignal.actionTypes.add(action);
     }
+
+    for (const [action, count] of Object.entries(googlePersonSignal.actionCounts)) {
+      namedSignal.actionCounts[action] = (namedSignal.actionCounts[action] ?? 0) + count;
+    }
+
+    namedSignal.identityResolution = "heuristic";
 
     usedNamedKeys.add(namedSignal.contributorKey);
     signals.delete(googlePersonSignal.contributorKey);
@@ -226,8 +250,12 @@ function getOrCreateSignal(
     activityCount: 0,
     revisionCount: 0,
     actionTypes: new Set<string>(),
+    actionCounts: {},
+    weightedActivityPoints: 0,
+    timelineMoments: [],
     appearedAsLastModifier: false,
-    activitySharePercent: 0
+    activitySharePercent: 0,
+    identityResolution: identity.key.startsWith(GOOGLE_PERSON_PREFIX) ? "unresolved" : "direct"
   };
 
   signals.set(identity.key, signal);
@@ -246,6 +274,29 @@ function updateDateRange(signal: SignalDraft, timestamp?: string) {
   if (!signal.lastActivityAt || timestamp > signal.lastActivityAt) {
     signal.lastActivityAt = timestamp;
   }
+}
+
+function appendTimelineMoment(signal: SignalDraft, timestamp?: string) {
+  if (!timestamp) {
+    return;
+  }
+
+  signal.timelineMoments.push(timestamp);
+}
+
+function getEventWeight(actions: string[]) {
+  const normalizedActions = actions.map(normalizeActionName);
+  const eventWeights = normalizedActions.map((action) => ACTION_WEIGHTS[action] ?? 0.1);
+
+  return eventWeights.length === 0 ? 0.1 : Math.max(...eventWeights);
+}
+
+function normalizeActionName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function sortTimelineMoments(values: string[]) {
+  return [...values].sort((first, second) => first.localeCompare(second));
 }
 
 function normalizeKey(value: string) {
